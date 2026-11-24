@@ -1,0 +1,40 @@
+1. Interview questions you should prepare
+
+These are the questions I would prioritize for a particular job requirement.
+Priority	Interview question
+High	What is Kafka, and how does it work?
+High	How do you test Kafka-based microservices?
+High	How do you validate message schemas?
+High	How do you test backward compatibility?
+High	How do you test duplicate messages and idempotency?
+High	How do you test message ordering?
+High	How do you test consumer failure and message replay?
+High	How do you handle messages that repeatedly fail?
+Medium	What is consumer lag, and how do you monitor it?
+Medium	What is the difference between at-most-once, at-least-once, and exactly-once processing?
+Medium	How would you perform Kafka performance testing?
+Medium	How would you integrate Kafka tests into CI/CD?
+One particularly important concept:
+Exactly-once processing: Kafka supports exactly-once semantics for certain Kafka-to-Kafka processing workflows. However, 
+that does not automatically guarantee exactly-once effects in an external database or payment system. You still need appropriate transaction handling and idempotency.
+
+2. How I would answer the job requirement in an interview
+Here is an answer you can practice. It is written for someone with strong QA and microservices experience who is developing Kafka-specific expertise.
+My approach to testing event-driven systems like Kafka is to focus on message integrity, compatibility, reliable processing, and end-to-end business correctness.
+
+I would divide the testing strategy into several areas:
+
+1. **Message schema validation:** Validate required fields, data types, business rules, and message structure. I would use schema validation and Schema Registry 
+to detect incompatible changes.
+2. **Backward compatibility:** Verify that changes to event schemas do not break existing consumers. I would test old and new producer/consumer combinations
+using representative event payloads.
+3. **Replay and recovery:** Simulate consumer downtime, restart consumers, and verify that unprocessed events can be recovered without losing business transactions.
+4. **Idempotency:** Publish duplicate events and verify that downstream services do not create duplicate payments, orders, or inventory transactions.
+5. **Ordering:** Validate ordering requirements within Kafka partitions, particularly for events belonging to the same business entity. 
+I would also test how consumers handle delayed or out-of-sequence events.
+6. **Failure handling:** Simulate broker outages, consumer failures, downstream API timeouts, and invalid messages. Verify retry policies, dead-letter topics, 
+recovery behavior, and error logging.
+For automation, I would use Python with confluent-kafka and Pytest to publish and consume events, validate payloads, and verify downstream results through APIs and database queries.
+I would also integrate these tests into CI/CD, separating fast schema and contract checks from broader integration, recovery, and performance tests.
+Finally, I would monitor throughput, consumer lag, processing latency, error rates, and duplicate processing to evaluate system reliability and performance.
+My overall objective is to validate not just whether Kafka delivers messages, but whether the entire event-driven business workflow processes them correctly and reliably.
