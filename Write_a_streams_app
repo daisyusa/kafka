@@ -1,0 +1,10 @@
+Write a streams app
+
+https://kafka.apache.org/44/streams/tutorial/
+
+Tutorial: Write a Kafka Streams Application
+
+Setting up a Maven Project
+Writing a first Streams application: Pipe
+Writing a second Streams application: Line Split
+Writing a third Streams application: Wordcount
