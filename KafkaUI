@@ -1,0 +1,120 @@
+Kafka UI
+
+Kafka UI is a web-based graphical interface that allows developers and QA engineers to monitor, inspect, and manage a Kafka cluster without writing command-line commands.
+Think of it as a dashboard for Kafka.
+Instead of writing Python code just to see whether a message was published, you can open Kafka UI in your browser and inspect the messages visually.
+1. What does Kafka UI look like?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+9
+
+
+
+
+
+
+
+
+
+A commonly used open-source tool is Kafka UI (Provectus).
+It provides several useful views.
+2. What can a QA engineer do with Kafka UI?
+Feature	What you can test
+Topics	Check whether expected topics exist
+Messages	Inspect published event payloads
+Partitions	Check partition distribution
+Consumer Groups	See which consumers are connected
+Consumer Lag	Identify consumers falling behind
+Offsets	Inspect consumer progress
+Message Keys	Verify message keys, such as orderId
+Schema information	Inspect schemas and versions when integrated with Schema Registry
+3. Practical example: Testing an order event
+Imagine you have this architecture:
+Order Service
+     |
+     v
+Kafka Topic: orders
+     |
+     v
+Payment Consumer
+     |
+     v
+Payment Database
+
+
+Your Python automation publishes this event:
+{
+  "eventId": "EVT001",
+  "orderId": "ORD123",
+  "amount": 500,
+  "status": "CREATED"
+}
+
+
+Now open Kafka UI.
+You can perform these QA checks:
+Test 1: Verify the topic
+- Open Topics.
+- Find orders.
+- Verify the topic exists.
+- Check the number of partitions.
+Test 2: Verify the message
+- Open the orders topic.
+- Go to Messages.
+- Find your test event.
+- Verify orderId, amount, and status.
+Test 3: Verify consumer processing
+- Open Consumer Groups.
+- Find payment-consumer-group.
+- Check whether it is active.
+- Check consumer lag.
+Test 4: Verify partition distribution
+- Inspect message keys.
+- Check whether events with the same orderId are routed consistently to the same partition.
+4. How do you install Kafka UI?
+If you already have Kafka and Docker running, you can run Kafka UI using Docker:
+docker run -d \
+  --name kafka-ui \
+  -p 8080:8080 \
+  -e KAFKA_CLUSTERS_0_NAME=local \
+  -e KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=host.docker.internal:9092 \
+  provectuslabs/kafka-ui:latest
+
+
+Then open:
+http://localhost:8080Note: This assumes Kafka is running on your host machine and Docker can reach it through host.docker.internal. If Kafka is running in another Docker container, configure the appropriate Docker network and broker address instead.
+5. Kafka UI vs Schema Registry vs Kafka
+This distinction is important for interviews.
+Apache Kafka
+
+Stores and transports event messages.
+
+Schema Registry
+
+Manages message schemas and compatibility.
+
+Kafka UI
+
+Provides a visual interface to inspect and manage Kafka.
+
+6. Interview question: How do you use Kafka UI in testing?
+You can answer:
+"I use Kafka UI as a supporting tool for Kafka integration and troubleshooting. I can inspect topics, partitions, message payloads, keys, offsets, and consumer groups. For example, after publishing an order event through Python automation, I can use Kafka UI to verify that the event reached the expected topic and inspect its contents. I can also monitor consumer lag and identify processing problems. However, I would use automated Python and Pytest assertions for repeatable validation in CI/CD rather than relying on manual UI checks."
