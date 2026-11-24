@@ -1,0 +1,15 @@
+# Download, Installation
+
+https://kafka.apache.org/quickstart/
+
+Step 1: Step 1: Get Kafka
+Step 2: Start the Kafka environment
+Step 3: Create a topic to store your events
+Step 4: Write some events into the topic
+Step 5: Read the events
+Step 6: Import/export your data as streams of events with Kafka Connect
+Step 7: Process your events with Kafka Streams
+Step 8: Terminate the Kafka environment
+
+# Quick start for running the Kafka Streams demo application. WordCount
+https://kafka.apache.org/44/streams/quickstart/
