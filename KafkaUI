@@ -5,35 +5,6 @@ Think of it as a dashboard for Kafka.
 Instead of writing Python code just to see whether a message was published, you can open Kafka UI in your browser and inspect the messages visually.
 1. What does Kafka UI look like?
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-9
-
-
-
-
-
-
-
-
-
 A commonly used open-source tool is Kafka UI (Provectus).
 It provides several useful views.
 2. What can a QA engineer do with Kafka UI?
