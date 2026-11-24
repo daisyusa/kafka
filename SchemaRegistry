@@ -1,0 +1,335 @@
+Schema Registry is a centralized service that stores, manages, and validates the schemas (message structures) used by Kafka producers and consumers.
+Think of it as a contract manager for Kafka messages.
+It helps ensure that when one service publishes a message, other services understand its structure and can process it correctly.
+1. Why do we need Schema Registry?
+Imagine an e-commerce application.
+The Order Service publishes messages to Kafka, and the Payment Service consumes them.
+Initially, the message looks like this:
+Version 1
+{
+  "orderId": "ORD123",
+  "amount": 500
+}
+
+
+The Payment Service expects:
+- orderId: String
+- amount: Number
+Now a developer changes the message structure.
+Version 2
+{
+  "orderId": "ORD123",
+  "amount": "500",
+  "currency": "USD"
+}
+
+
+There are two changes:
+1. amount changed from a number to a string.
+2. A new currency field was added.
+The old Payment Service might expect a number and fail when it receives a string.
+This is a compatibility problem.
+Schema Registry helps detect incompatible schema changes before they break consumers.
+2. How does Schema Registry work?
+
+
+
+
+
+
+
+conduktor.io
+
+
+The basic workflow:
+1. Developer defines a message schema.
+2. Producer registers or retrieves the schema from Schema Registry.
+3. Producer serializes the event using that schema.
+4. Kafka stores the serialized message.
+5. Consumer retrieves the corresponding schema.
+6. Consumer deserializes the message and processes it.
+An important distinction:
+- Kafka stores and transports messages.
+- Schema Registry manages message definitions and compatibility.
+- Producers and consumers use serializers/deserializers to encode and decode messages.
+3. What types of schemas does it support?
+Three common formats:
+Format	Description
+Avro	Compact binary serialization; widely used with Kafka
+Protobuf	Google's Protocol Buffers
+JSON Schema	Defines structure and validation rules for JSON
+For interview purposes, know what Avro is and understand how schema compatibility works.
+4. What does backward compatibility mean in Schema Registry?
+This is particularly important for your job description.
+Suppose the original schema is:
+{
+  "orderId": "string",
+  "amount": "number"
+}
+
+
+A developer adds an optional field:
+{
+  "orderId": "string",
+  "amount": "number",
+  "currency": "string"
+}
+
+
+Under an appropriate backward-compatible schema definition, old messages can still be read by the new consumer.
+However, compatibility depends on the schema format, defaults, and compatibility configuration.
+Common Schema Registry compatibility settings:
+Setting	Meaning
+BACKWARD	New consumer can read old messages
+FORWARD	Old consumer can read new messages
+FULL	Both directions
+BACKWARD_TRANSITIVE	New schema is compatible with all previous versions
+FORWARD_TRANSITIVE	Old consumers can read all newer versions
+FULL_TRANSITIVE	Full compatibility across all previous versions
+NONE	No compatibility checking
+One important detail: In Avro, adding a field generally requires an appropriate default value for backward compatibility.
+5. How would YOU test Schema Registry as a QA engineer?
+This is where you can demonstrate your QA expertise.
+Test scenario	Expected result
+Register a valid schema	Successful registration
+Register an invalid schema	Registration rejected
+Add an optional field with a default	Accepted under backward compatibility
+Remove a required field	Rejected if incompatible
+Change a field's data type	Rejected if incompatible
+Register an incompatible schema version	Rejected according to configured policy
+Publish event using registered schema	Consumer successfully deserializes it
+Consume an older event with a newer consumer	Successfully processed when compatibility is supported
+Example of a practical QA test:
+1. Register schema V1.
+2. Publish 100 events using V1.
+3. Introduce schema V2 with a new optional field.
+4. Verify Schema Registry accepts V2 under BACKWARD compatibility.
+5. Deploy the new consumer.
+6. Verify it can process both V1 and V2 messages.
+7. Verify business data is correct.
+You can automate these tests using Python, Pytest, and Schema Registry APIs.
+6. What should you say in an interview?
+Here is a concise answer you can practice:
+Schema Registry is a centralized service used to manage and validate message schemas in Kafka-based systems.
+As a QA engineer, I would use it to ensure that producers and consumers follow an agreed message contract.
+For example, when a producer introduces a new field or changes an existing field, I would verify whether the schema change is backward compatible and whether existing consumers can still process the messages.
+I would test schema registration, invalid schemas, required and optional fields, data type changes, and compatibility between different schema versions.
+I would also perform integration testing by publishing events using different schema versions and verifying that consumers can deserialize and process them correctly.
+My goal is to catch contract-breaking changes before they reach production.
+
+
+
+
+
+7. Check your understanding
+Let's see whether you've understood the concept. These are similar to questions an interviewer might ask.
+Kafka Schema Registry quiz
+3/3 answered
+
+1. What is the primary responsibility of Schema Registry?
+
+Store Kafka messages
+
+Manage and validate message schemas
+
+Process payment transactions
+
+Monitor consumer performance
+
+Correct
+
+Kafka stores messages; Schema Registry manages their schemas and compatibility.
+
+
+
+2. A developer adds a new optional field to an Avro schema. What should QA verify?
+
+Kafka broker restarts
+
+Schema compatibility and consumer behavior
+
+Database indexes
+
+Consumer group names
+
+Correct
+
+Verify compatibility rules, including defaults, and test old messages with the new consumer.
+
+
+
+3. What does BACKWARD compatibility mean?
+
+Old consumer reads new messages
+
+New consumer reads old messages
+
+Kafka guarantees global message ordering
+
+Messages are processed exactly once
+
+Correct
+
+Backward means the new schema/reader can read data written with the previous schema.
+
+
+Your score: 3/3
+Try again
+My recommendation: Make sure you understand Schema Registry and schema compatibility before moving to the next Kafka topic. These concepts are directly connected to the job description's requirement for standardized testing of event-driven systems.
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+could you give one python example?
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+Absolutely. Let's build a practical Python + Kafka + Schema Registry example from a QA engineer's perspective.
+We'll use an e-commerce order event. The example will demonstrate:
+1. Define an event schema.
+2. Register the schema in Schema Registry.
+3. Publish a Kafka message using that schema.
+4. Consume and deserialize the message.
+5. Validate the message using Python assertions.
+We'll use Avro, a common serialization format with Kafka.
+1. Install Python libraries
+pip install confluent-kafka fastavro
+
+
+You need Kafka and Schema Registry running locally. For this example, assume:
+Kafka:           localhost:9092
+Schema Registry: http://localhost:8081
+
+
+2. Define the Avro schema
+Create a file called order_schema.avsc:
+{
+  "type": "record",
+  "name": "Order",
+  "namespace": "com.example",
+  "fields": [
+    {"name": "eventId", "type": "string"},
+    {"name": "orderId", "type": "string"},
+    {"name": "amount", "type": "double"},
+    {"name": "status", "type": "string"}
+  ]
+}
+
+
+This schema defines the expected structure of an Order event.
+For example:
+{
+  "eventId": "EVT001",
+  "orderId": "ORD123",
+  "amount": 500.00,
+  "status": "CREATED"
+}
+
+
+3. Python Producer: Register schema and publish event
+Create producer.py:
+import jsonfrom confluent_kafka.serialization import StringSerializer# Connect to Schema Registryschema_registry = SchemaRegistryClient({    "url": "http://localhost:8081"})# Load Avro schemawith open("order_schema.avsc") as f:    schema = f.read()# Create Avro serializeravro_serializer = AvroSerializer(    schema_registry,    schema,    lambda obj, ctx: obj)# Configure Kafka producerproducer = SerializingProducer({    "bootstrap.servers": "localhost:9092",    "key.serializer": StringSerializer("utf_8"),    "value.serializer": avro_serializer})# Create test eventevent = {    "eventId": "EVT001",    "orderId": "ORD123",    "amount": 500.00,    "status": "CREATED"}# Publish eventproducer.produce(    topic="orders",    key="ORD123",    value=event,    on_delivery=lambda err, msg:        print("Published successfully" if err is None else err))producer.flush()
+
+
+
+What happens here?
+- Python connects to Schema Registry.
+- AvroSerializer registers or retrieves the schema.
+- Python serializes the order event.
+- Kafka Producer publishes the serialized event to the orders topic.
+You don't manually register the schema using a separate API call here. The serializer handles registration when configured to do so.
+4. Python Consumer: Read and deserialize event
+Create consumer.py:
+from confluent_kafka import DeserializingConsumerschema_registry = SchemaRegistryClient({    "url": "http://localhost:8081"})avro_deserializer = AvroDeserializer(    schema_registry)consumer = DeserializingConsumer({    "bootstrap.servers": "localhost:9092",    "group.id": "qa-test-group",    "auto.offset.reset": "earliest",    "key.deserializer": StringDeserializer("utf_8"),    "value.deserializer": avro_deserializer})consumer.subscribe(["orders"])message = consumer.poll(10)if message is None:    print("No message received")elif message.error():    print("Kafka error:", message.error())else:    event = message.value()    print("Received event:", event)    # QA validation    assert event["eventId"] == "EVT001"    assert event["orderId"] == "ORD123"    assert event["amount"] == 500.00    assert event["status"] == "CREATED"    print("All QA validations passed!")consumer.close()
+
+
+
+The consumer uses the schema ID embedded in the serialized message to retrieve the appropriate schema and deserialize the event.
+5. What would QA test?
+Now let's look at the actual testing value.
+Test case	Expected result
+Publish valid event	Message successfully published
+Missing required eventId	Serialization fails
+Amount contains invalid data type	Serialization fails
+Invalid event status	May serialize, but business validation should reject it
+Add optional currency field with default	Compatible schema change
+Change amount from double to incompatible type	Compatibility check should reject it
+Old consumer reads new event	Depends on configured compatibility
+Notice something important:
+Schema validation and business validation are different.
+For example, "status": "UNKNOWN" is still a valid Avro string. Avro won't reject it just because your business rules don't allow that status.
+You need separate QA assertions for business rules.
+6. How would you test backward compatibility?
+Suppose you have two versions of the schema.
+V1:
+{
+  "type": "record",
+  "name": "Order",
+  "fields": [
+    {"name": "orderId", "type": "string"}
+  ]
+}
+
+
+V2:
+{
+  "type": "record",
+  "name": "Order",
+  "fields": [
+    {"name": "orderId", "type": "string"},
+    {
+      "name": "currency",
+      "type": ["null", "string"],
+      "default": null
+    }
+  ]
+}
+
+
+With BACKWARD compatibility enabled, V2 can read old V1 messages because the new field has a default value.
+Your test would:
+1. Register V1.
+2. Publish an event using V1.
+3. Register V2.
+4. Verify compatibility is accepted.
+5. Use the V2 consumer to read the old V1 event.
+6. Verify currency defaults to None.
+This is a very practical example of the job description's requirement.
+
+7. What I want you to remember for your interview
+Three components, three responsibilities
+Producer
+Publishes events using a defined schema.
+
+
+Schema Registry
+Manages schemas and checks compatibility.
+
+
+Consumer
+Deserializes and processes events.
+
+
+One important distinction: Schema Registry doesn't validate every business rule or automatically guarantee that every consumer is compatible. QA must test both schema compatibility and actual producer-consumer integration.
