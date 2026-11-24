@@ -32,15 +32,6 @@ This is a compatibility problem.
 Schema Registry helps detect incompatible schema changes before they break consumers.
 2. How does Schema Registry work?
 
-
-
-
-
-
-
-conduktor.io
-
-
 The basic workflow:
 1. Developer defines a message schema.
 2. Producer registers or retrieves the schema from Schema Registry.
@@ -117,96 +108,12 @@ I would test schema registration, invalid schemas, required and optional fields,
 I would also perform integration testing by publishing events using different schema versions and verifying that consumers can deserialize and process them correctly.
 My goal is to catch contract-breaking changes before they reach production.
 
-
-
-
-
 7. Check your understanding
 Let's see whether you've understood the concept. These are similar to questions an interviewer might ask.
-Kafka Schema Registry quiz
-3/3 answered
 
-1. What is the primary responsibility of Schema Registry?
+8: Python example
 
-Store Kafka messages
-
-Manage and validate message schemas
-
-Process payment transactions
-
-Monitor consumer performance
-
-Correct
-
-Kafka stores messages; Schema Registry manages their schemas and compatibility.
-
-
-
-2. A developer adds a new optional field to an Avro schema. What should QA verify?
-
-Kafka broker restarts
-
-Schema compatibility and consumer behavior
-
-Database indexes
-
-Consumer group names
-
-Correct
-
-Verify compatibility rules, including defaults, and test old messages with the new consumer.
-
-
-
-3. What does BACKWARD compatibility mean?
-
-Old consumer reads new messages
-
-New consumer reads old messages
-
-Kafka guarantees global message ordering
-
-Messages are processed exactly once
-
-Correct
-
-Backward means the new schema/reader can read data written with the previous schema.
-
-
-Your score: 3/3
-Try again
-My recommendation: Make sure you understand Schema Registry and schema compatibility before moving to the next Kafka topic. These concepts are directly connected to the job description's requirement for standardized testing of event-driven systems.
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-could you give one python example?
-
-
-
-
-
- 
-
-
-
-
-
-
-
-Absolutely. Let's build a practical Python + Kafka + Schema Registry example from a QA engineer's perspective.
+Let's build a practical Python + Kafka + Schema Registry example from a QA engineer's perspective.
 We'll use an e-commerce order event. The example will demonstrate:
 1. Define an event schema.
 2. Register the schema in Schema Registry.
@@ -252,8 +159,6 @@ For example:
 Create producer.py:
 import jsonfrom confluent_kafka.serialization import StringSerializer# Connect to Schema Registryschema_registry = SchemaRegistryClient({    "url": "http://localhost:8081"})# Load Avro schemawith open("order_schema.avsc") as f:    schema = f.read()# Create Avro serializeravro_serializer = AvroSerializer(    schema_registry,    schema,    lambda obj, ctx: obj)# Configure Kafka producerproducer = SerializingProducer({    "bootstrap.servers": "localhost:9092",    "key.serializer": StringSerializer("utf_8"),    "value.serializer": avro_serializer})# Create test eventevent = {    "eventId": "EVT001",    "orderId": "ORD123",    "amount": 500.00,    "status": "CREATED"}# Publish eventproducer.produce(    topic="orders",    key="ORD123",    value=event,    on_delivery=lambda err, msg:        print("Published successfully" if err is None else err))producer.flush()
 
-
-
 What happens here?
 - Python connects to Schema Registry.
 - AvroSerializer registers or retrieves the schema.
@@ -263,8 +168,6 @@ You don't manually register the schema using a separate API call here. The seria
 4. Python Consumer: Read and deserialize event
 Create consumer.py:
 from confluent_kafka import DeserializingConsumerschema_registry = SchemaRegistryClient({    "url": "http://localhost:8081"})avro_deserializer = AvroDeserializer(    schema_registry)consumer = DeserializingConsumer({    "bootstrap.servers": "localhost:9092",    "group.id": "qa-test-group",    "auto.offset.reset": "earliest",    "key.deserializer": StringDeserializer("utf_8"),    "value.deserializer": avro_deserializer})consumer.subscribe(["orders"])message = consumer.poll(10)if message is None:    print("No message received")elif message.error():    print("Kafka error:", message.error())else:    event = message.value()    print("Received event:", event)    # QA validation    assert event["eventId"] == "EVT001"    assert event["orderId"] == "ORD123"    assert event["amount"] == 500.00    assert event["status"] == "CREATED"    print("All QA validations passed!")consumer.close()
-
-
 
 The consumer uses the schema ID embedded in the serialized message to retrieve the appropriate schema and deserialize the event.
 5. What would QA test?
